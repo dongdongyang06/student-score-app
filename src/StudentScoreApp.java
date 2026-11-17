@@ -17,17 +17,34 @@ import java.util.Scanner;
  */
 public class StudentScoreApp {
 
-    // ==================== 一、学生模型 ====================
-    static class Student {
-        String id;      // 学号
-        String name;    // 姓名
-        double score;   // 成绩
+    // ==================== 抽象类：人的共同部分 ====================
+    static abstract class Person {
+        protected String id;
+        protected String name;
 
-        Student(String id, String name, double score) {
+        Person(String id, String name) {
             this.id = id;
             this.name = name;
+        }
+
+        // 抽象方法：只说"要能报出身份"，具体内容交给子类
+        abstract String getRole();
+    }
+
+    // ==================== 一、学生模型 ====================
+    static class Student extends Person {
+        private double score;
+
+        Student(String id, String name, double score) {
+            super(id, name);
             this.score = score;
         }
+
+        double getScore() { return score; }
+        void setScore(double score) { this.score = score; }
+
+        @Override
+        String getRole() { return "本科生"; }
     }
 
     // ==================== 二、管理逻辑 ====================
@@ -69,7 +86,7 @@ public class StudentScoreApp {
         void save() {
             try (BufferedWriter writer = Files.newBufferedWriter(dataFile, StandardCharsets.UTF_8)) {
                 for (Student s : students) {
-                    writer.write(s.id + "," + s.name + "," + s.score);
+                    writer.write(s.id + "," + s.name + "," + s.getScore());
                     writer.newLine();
                 }
                 System.out.println("[提示] 已保存 " + students.size()
@@ -109,8 +126,8 @@ public class StudentScoreApp {
                 return false;
             }
             if (newName != null && !newName.isEmpty()) s.name = newName;
-            if (newScore != null) s.score = newScore;
-            System.out.println("[成功] 已更新：" + s.id + " " + s.name + " " + s.score);
+            if (newScore != null) s.setScore(newScore);
+            System.out.println("[成功] 已更新：" + s.id + " " + s.name + " " + s.getScore());
             return true;
         }
 
@@ -140,8 +157,8 @@ public class StudentScoreApp {
         /** 按分数从高到低。返回新列表，不改动原顺序 */
         List<Student> sortedByScoreDesc() {
             List<Student> copy = new ArrayList<>(students);
-            // b.score 在前、a.score 在后 = 降序
-            copy.sort((a, b) -> Double.compare(b.score, a.score));
+            // b 在前、a 在后 = 降序
+            copy.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
             return copy;
         }
     }
@@ -210,7 +227,7 @@ public class StudentScoreApp {
         Student s = mgr.findById(id);
         if (s == null) { System.out.println("[失败] 没有学号 " + id + " 的学生。"); return; }
 
-        System.out.println("当前：" + s.name + " " + s.score);
+        System.out.println("当前：" + s.name + " " + s.getScore());
         System.out.print("新姓名（直接回车表示不改）：");
         String name = sc.nextLine().trim();
         System.out.print("新成绩（直接回车表示不改）：");
@@ -269,14 +286,15 @@ public class StudentScoreApp {
             System.out.println("（暂无记录）");
             return;
         }
-        System.out.println("--------------------------------------");
-        System.out.printf("%-4s %-10s %-8s %6s%n", "", "学号", "姓名", "成绩");
-        System.out.println("--------------------------------------");
+        System.out.println("------------------------------------------------");
+        System.out.printf("%-4s %-10s %-8s %-8s %6s%n", "", "学号", "姓名", "身份", "成绩");
+        System.out.println("------------------------------------------------");
         int rank = 1;
         for (Student s : list) {
-            System.out.printf("%-4s %-10s %-8s %6.1f%n",
-                    ranked ? String.valueOf(rank++) : "", s.id, s.name, s.score);
+            System.out.printf("%-4s %-10s %-8s %-8s %6.1f%n",
+                    ranked ? String.valueOf(rank++) : "",
+                    s.id, s.name, s.getRole(), s.getScore());
         }
-        System.out.println("--------------------------------------");
+        System.out.println("------------------------------------------------");
     }
 }
